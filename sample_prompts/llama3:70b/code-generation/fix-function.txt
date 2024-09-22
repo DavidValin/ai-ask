@@ -1,0 +1,34 @@
+Modify the next code so that it ends the process with force when there has been one or many promissed resolved and the last promise was resolved more than 1 sec ago
+
+```javascript
+class PromiseQueue {
+  constructor() {
+    this.queue = [];
+    this.isProcessing = false;
+  }
+
+  enqueue(promiseFunc) {
+    this.queue.push(promiseFunc);
+    this.processQueue();
+  }
+
+  async processQueue() {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+
+    while (this.queue.length > 0) {
+      const promiseFunc = this.queue.shift();
+      try {
+        const result = await promiseFunc();
+        // console.log('Promise resolved:', result);
+      } catch (error) {
+        console.error('Error resolving promise:', error);
+      }
+    }
+
+    this.isProcessing = false;
+  }
+}
+
+module.exports = PromiseQueue
+```

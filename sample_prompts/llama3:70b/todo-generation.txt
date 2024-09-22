@@ -1,0 +1,23 @@
+
+Given this todo format:
+
+```txt
+
+[ ] My first task
+[ ] My second task
+[x] A completed task
+[ ] A task with subtasks
+    [ ] My first subtask
+    [ ] My second subtask
+
+```
+
+Generate 5 different random TODO lists of common daily tasks following this requirements:
+
+  0. Make sure the code language uses "txt as language as in the example right after ``` in the same line
+  1. Make sure each TO-DO list is wrapped with ``` from other TODO lists
+  2. following the above format
+  3. Make sure each TODO list contains a minimum of 7 tasks
+  4. Make sure TODOs lists have at least 2 levels of subtasks, and of others at least 3 levels
+  5. Make sure each todo list has a gap of 1 blank line between them
+

@@ -1,0 +1,15 @@
+I have this javascript code:
+
+```javascript
+    if (saveResponseFiles) {
+      const regex = /```(.+)\n([^`]+)```/;
+      const match = regex.exec(fullResponse);
+      if (match) {
+        const lang = match[1];
+        const code = match[2];
+        fs.writeFileSync(`code.${lang}`, code);
+      }
+    }
+```
+
+I need to modify it so it saves multiple matched files, not just one

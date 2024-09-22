@@ -1,0 +1,4 @@
+build/
+**/prompts
+**/ai_output/
+node_modules

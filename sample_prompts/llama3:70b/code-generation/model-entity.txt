@@ -1,0 +1,25 @@
+giving a model like this:
+
+Invoice
+  number: number (unique serial)
+  date: date (utc)
+  base_amount_cents: float
+  vat_percentage: float
+  total_amount_cents: float
+  issuer_name: string
+  issuer_country: string
+  issuer_tax_id: string
+  recipient_name: string
+  recipient_country: string
+  recipient_tax_id: string
+
+Write down the next items:
+
+1. the postgres sql for this table
+2. a c struct for this record
+3. a typescript definition
+4. A java class to hold this model
+5. an http rest endpoint in express.js with POST, PUT, PATCH, GET and DELETE, including validation
+6. a simple javascript client for this api using fetch and no framework
+
+and make sure its complete and fully working
