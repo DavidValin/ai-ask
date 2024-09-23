@@ -1,8 +1,8 @@
 {
-  "name": "aictl",
-  "version": "1.0.0",
+  "name": "ai-ask",
+  "version": "1.0.1",
   "description": "",
-  "main": "build/aictl",
+  "main": "build/ask",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

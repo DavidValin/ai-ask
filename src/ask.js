@@ -14,9 +14,9 @@ const https = require('https');
 const { Ollama } = require('ollama');
 const Speaker = require('speaker');
 const wavDecoder = require('wav-decoder');
-const PlaybackQueue = require('./playback_queue');
 const readline = require('readline');
 const shortUuid = require('short-uuid');
+const SeqPromiseQueue = require('./seq_promise_queue');
 
 // check for correct argv
 if (process.argv.length < 3) {
@@ -35,7 +35,9 @@ const defaultVoiceName = process.env.ASK_DEFAULT_VOICE || 'coqui-tts:en_ljspeech
 const useMTLS = process.env.ASK_USE_MTLS || false;
 const outputFolder = path.join(process.cwd(), 'ai_output');
 
-let speaker = '';
+const audioChunksQueue = new SeqPromiseQueue();
+
+let speaker = null;
 let prompt = '';
 let saveResponseFiles = false;
 
@@ -103,7 +105,7 @@ const ollamaClient = new Ollama({
 let fullResponse = '';
 let buffer = '';
 let newPhrases = [];
-const playbackQueue = new PlaybackQueue();
+let audioChunks = [];
 
 // Ask something and get the reply
 (
@@ -125,21 +127,42 @@ const playbackQueue = new PlaybackQueue();
         process.stdout.write(part.message.content);
         newPhrases = buffer.split(".");
         buffer = newPhrases.pop(); // Keep the last incomplete phrase in the buffer
-        
+
         // TTY mode
         for (let i = 0; i < newPhrases.length; i++) {
-          const phrase = newPhrases[i];
+          // make each line a different phrase to help speech
+          const phrase = newPhrases[i].split("\n").join("."); 
           const trimmedPhrase = phrase.trim();
           if (trimmedPhrase.length > 0) {
-            processPhrase(trimmedPhrase);
+            // add of a queue of sequential promises that resolve in order...
+            audioChunksQueue.add(
+              async () => {
+                try {
+                  // get audio in wav from the phrase
+                  audioChunks = await getAudioSpeech(`${trimmedPhrase}.`); // add a dot for the speech to properly stop
+                  return await playWavBuffer(audioChunks);
+                } catch(e) { console.log(e); return Promise.reject(e) }
+              }
+            );
           }
         }
       } catch(e) {
           console.error(`error :: error processing response from ollama`, e);
       }
     }
-    processPhrase(buffer);
+    // dont forget the last part...
+    await audioChunksQueue.add(
+      async () => {
+        try {
+          // get audio in wav from the phrase
+          audioChunks = await getAudioSpeech(buffer);
+          return await playWavBuffer(audioChunks);
+        } catch(e) { console.log(e); return Promise.reject(e) }
+      }
+    );
+
     process.stdout.write("\n\n");
+    speaker.end();
 
     if (saveResponseFiles) {
       const matches = fullResponse.matchAll(
@@ -166,8 +189,10 @@ const playbackQueue = new PlaybackQueue();
     }
     fullResponse = '';
     process.stdout.write("\n\n");
+    process.exit();
   }
 )();
+
 
 /**
  * Retrieves the speech in wav format for a give text using a voice
@@ -208,14 +233,15 @@ async function openTTS(text, voiceName = defaultVoiceName) { // sounds cool: coq
 }
 
 /**
- * Processes a new phrase
+ * Get audio speech for a given phrase
  * 
  * @param {string} phrase The phrase to process
  */
-async function processPhrase(phrase) {
+async function getAudioSpeech(phrase) {
   cleanPhrase = phrase
     .replaceAll("\n", '')
-    .replaceAll("**", '');
+    .replaceAll("**", '')
+    .replaceAll("---", '');
 
   // console.log("info :: phrase: ", cleanPhrase);
   try {
@@ -223,9 +249,7 @@ async function processPhrase(phrase) {
       // console.log('info :: calling openTTS')
       const audioChunks = await openTTS(cleanPhrase);
       // console.log('info :: got new audio from openTTS');
-      playbackQueue.enqueue(() => {
-        return playWavBuffer(audioChunks)
-      });
+      return audioChunks;
     }
   } catch(e) {
     console.error(`error :: error processing a phrase`, e);
@@ -248,33 +272,36 @@ async function playWavBuffer(audioChunks) {
         if (!decodedWav.channelData || decodedWav.channelData.length === 0) {
           throw new Error("Decoded audio does not contain channel data.");
         }
-    
+
         const { sampleRate, channelData } = decodedWav;
         const channels = channelData.length;
-    
+
         // console.log(`info :: sample rate: ${sampleRate}, channels: ${channels}`);
-    
+
         speaker = new Speaker({
           channels: channels,
           bitDepth: 16, // bit depth (assuming 16-bit PCM)
           sampleRate: sampleRate // sample rate from WAV file
         });
-    
+
         // write the entire PCM buffer to the speaker
         speaker.write(audioBuffer);
-        speaker.end(); // signal end of the stream
-    
+        speaker.end();
+
         speaker.on('error', (e) => {
-          speaker.end();
+          // speaker.end();
         });
+
         speaker.on('finish', () => {
           // console.log('info :: finished playing audio.');
           isPlaying = false;
           resolve(true);
         });
+
       } catch (error) {
         console.error('error :: error decoding / playing audio:', error);
         isPlaying = false;
+        speaker.end();
         reject(error);
       }
     }
