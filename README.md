@@ -34,6 +34,9 @@ Install and run openTTS:
 Install `speaker` npm module globally:
 > ```npm install -g speaker```
 
+Make 'speaker' global module importable from 'ask' command:
+> ```export NODE_PATH=$(npm root -g)```
+
 Build and install agent client:
 > ```make```
 
@@ -44,9 +47,9 @@ By default services are assumed to run in localhost. If you run the services on 
 In your .bashrc file:
 
 ```
-ASK_OLLAMA_HOST=http://localhost:11434
-ASK_OPENTTS_HOST=http://localhost:5500
-ASK_DEFAULT_VOICE=coqui-tts:en_vctk#13
+export ASK_OLLAMA_HOST=http://localhost:11434
+export ASK_OPENTTS_HOST=http://localhost:5500
+export ASK_DEFAULT_VOICE=coqui-tts:en_vctk#13
 ```
 
 or before the ask as:
