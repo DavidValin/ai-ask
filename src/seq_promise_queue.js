@@ -3,10 +3,23 @@ class SeqPromiseQueue {
     this.queue = Promise.resolve();
   }
 
-  add(promise) {
-    this.queue = this.queue.then(() => promise()).catch((err) => {
+  add(promise, onDone) {
+    if (onDone) {
+      this.lastDoneCallback = onDone;
+    }
+    this.queue = this.queue
+      .then(() => promise())
+        .then(res => {
+          onDone && onDone(res);
+          return res;
+        })
+      .catch((err) => {
       console.error('Error occurred:', err);
     });
+    return this.queue;
+  }
+
+  getQueue() {
     return this.queue;
   }
 }

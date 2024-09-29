@@ -26,10 +26,10 @@ There are few sample prompt files you can try with:
 ### Setup instructions:
 
 Install and run ollama:
-> ```docker run -d --restart unless-stopped -v ollama:/root/.ollama -p 11434:11434```
+> ```docker run -d --restart unless-stopped -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama```
 
 Install and run openTTS:
-> ```docker run --restart unless-stopped -it -p 5500:5500 synesthesiam/opentts:en --no-espeak```
+> ```docker run -d --restart unless-stopped -it -p 5500:5500 --name opentts synesthesiam/opentts:en --no-espeak```
 
 Install `speaker` npm module globally:
 > ```npm install -g speaker```
@@ -47,10 +47,27 @@ By default services are assumed to run in localhost. If you run the services on 
 In your .bashrc file:
 
 ```
-export ASK_OLLAMA_HOST=http://localhost:11434
-export ASK_OPENTTS_HOST=http://localhost:5500
+export ASK_OLLAMA_BASEURL=http://localhost:11434
+export ASK_OPENTTS_BASEURL=http://localhost:5500
 export ASK_DEFAULT_VOICE=coqui-tts:en_vctk#13
+export ASK_LLM_MODEL=llama3
 ```
 
 or before the ask as:
 > ```ASK_DEFAULT_VOICE=coqui-tts:en_vctk#1 ask tell me nice story```
+
+
+### (optional) MTLs
+
+If you have an mtls server that acts as a proxy to your ollama and opentts services you can use the MTLs options (in your .bashrc); example::
+
+```
+export ASK_MTLS=true
+export ASK_MTLS_CA=/home/myuser/.ask/certs/ca.crt
+export ASK_MTLS_CERT_KEY=/home/myuser/.ask/certs/client.key
+export ASK_MTLS_CERT=/home/myuser/.ask/certs/client.crt
+export ASK_OLLAMA_BASEURL=http://localhost:11434/ollama
+export ASK_OPENTTS_BASEURL=http://localhost:5500/opentts
+export ASK_DEFAULT_VOICE=coqui-tts:en_vctk#1
+export ASK_LLM_MODEL=llama3
+```
