@@ -136,7 +136,6 @@ let plainBuffer = '';
 let jsonParts = [];
 let newPhrases = [];
 let audioChunks = [];
-let lastAudioPlayback = Promise.resolve();
 
 // Ask something and get the reply
 (
@@ -170,12 +169,17 @@ let lastAudioPlayback = Promise.resolve();
         }
       });
 
-      newPhrases = plainBuffer.split(".");
+      try {
+        newPhrases = plainBuffer.split("\n").map(line => line.split('.')).flat(Infinity);
+      } catch(e) {
+        newPhrases = [];
+      } 
+      
       
       // TTY mode
       for (let i = 0; i < newPhrases.length-1; i++) {
         // make each line a different phrase to help speech
-        const phrase = newPhrases[i].split("\n").join('.'); 
+        const phrase = newPhrases[i]; 
         // console.log('\n - new phrase: ', phrase);
         const trimmedPhrase = phrase.trim();
         if (trimmedPhrase.length > 0) {
@@ -185,18 +189,17 @@ let lastAudioPlayback = Promise.resolve();
             async () => {
               try {
                 // get audio in wav from the phrase
-                audioChunks = await getAudioSpeech(`${trimmedPhrase}.`); // add a dot for the speech to properly stop
+                audioChunks = shouldPlay ? await getAudioSpeech(`${trimmedPhrase}.`) : await Promise.resolve([]); // add a dot for the speech to properly stop
                 return audioChunks;
               } catch(e) { console.log(e); return Promise.reject(e) }
             },
             // done fetch wav, start playing
             async (audioChunks) => {
-              lastAudioPlayback = audioPlaybackQueue.add(
+              return audioPlaybackQueue.add(
                 async () => {
                   return shouldPlay ? playWavBuffer(audioChunks) : Promise.resolve();
                 }
               );
-              return lastAudioPlayback;
             }
           );
         }
@@ -209,23 +212,23 @@ let lastAudioPlayback = Promise.resolve();
 
     reader.releaseLock();
 
+    // last part
     audioChunksQueue.add(
       // start fetching wav for phrase
       async () => {
         try {
           // get audio in wav from the phrase
-          audioChunks = await getAudioSpeech(plainBuffer); // add a dot for the speech to properly stop
+          audioChunks = shouldPlay ? await getAudioSpeech(plainBuffer) : await Promise.resolve([]); // add a dot for the speech to properly stop
           return audioChunks;
         } catch(e) { console.log(e); return Promise.reject(e) }
       },
       // done fetch wav, start playing
       async (audioChunks) => {
-        lastAudioPlayback = audioPlaybackQueue.add(
+        return audioPlaybackQueue.add(
           async () => {
             return shouldPlay ? playWavBuffer(audioChunks) : Promise.resolve();
           }
         );
-        return lastAudioPlayback;
       }
     );
 
@@ -389,9 +392,9 @@ async function playWavBuffer(audioChunks) {
           speaker.end();
   
           speaker.on('error', (e) => {
-            console.log('err: ', e);
-            // speaker.end();
-            // resolve(true);
+            // console.log('err: ', e);
+            speaker.end();
+            resolve(true);
           });
   
           speaker.on('finish', () => {
@@ -400,9 +403,9 @@ async function playWavBuffer(audioChunks) {
             resolve(true);
           });
         } catch (error) {
-          console.error('error :: error decoding / playing audio:', error);
-          isPlaying = false;
-          reject(error);
+          // console.error('error :: error decoding / playing audio:', error);
+          //isPlaying = false;
+          // resolve(true)
         }
       }
     }

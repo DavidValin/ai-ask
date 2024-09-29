@@ -14,8 +14,8 @@ class SeqPromiseQueue {
           return res;
         })
       .catch((err) => {
-      console.error('Error occurred:', err);
-    });
+        // console.error(err);
+      });
     return this.queue;
   }
 
