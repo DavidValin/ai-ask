@@ -31,8 +31,8 @@ all:
 	@if ! grep -q "export ASK_LLM_MODEL=" ~/.bashrc; then \
 		echo "export ASK_LLM_MODEL=llama3" >> ~/.bashrc; \
 	fi
-	@if ! grep -q "export ASK_USE_MTLS=" ~/.bashrc; then \
-		echo "export ASK_USE_MTLS=false" >> ~/.bashrc; \
+	@if ! grep -q "export ASK_MTLS=" ~/.bashrc; then \
+		echo "export ASK_MTLS=false" >> ~/.bashrc; \
 	fi
 	@if ! grep -q "export ASK_MTLS_CERT_KEY=" ~/.bashrc; then \
 		echo "export ASK_MTLS_CERT_KEY=false" >> ~/.bashrc; \

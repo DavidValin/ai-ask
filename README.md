@@ -4,6 +4,8 @@
 * Allows you to enter prompt input directly inline in the terminal, or reading from a text file
 * Saves code files created by ai agents into files.
 
+![ai ask screenshot](https://github.com/DavidValin/ai-ask/raw/main/ai-ask-screenshot.jpg)
+
 ### Commands:
 
 * `ask <prompt to ask ai agent>` Ask an inline prompt and get the output text in screen and audio playback
